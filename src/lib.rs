@@ -21,7 +21,7 @@ pub struct Request {
     /// Limitter for max Post per requests. R34s API limmits to max 1000 Posts per request. Default Setting is 1000.
     pub req_limit: usize,
     /// All R34 tags should work when exactly taken over. Default is empty.
-    pub tags: Vec<&'static str>,
+    pub tags: Vec<String>,
     /// Json Formatted or not Json Formatted: Default is true.
     pub json: bool,
     /// Hashmap with the three IDs:
@@ -53,11 +53,11 @@ impl Request {
 
     /// Adds a Tag to the request
     pub fn add_tag(mut self, tag: &'static str) -> Self {
-        self.tags.push(tag);
+        self.tags.push(tag.to_string());
         self
     }
 
-    pub fn add_tags(mut self, mut tags: Vec<&'static str>) -> Self {
+    pub fn add_tags(mut self, mut tags: Vec<String>) -> Self {
         self.tags.append(&mut tags);
         self
     }
