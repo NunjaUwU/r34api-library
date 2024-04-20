@@ -1,3 +1,14 @@
+//! # Intro
+//! 
+//! Hi my english isnt the best so sorry if there are some errors in my grammer. I made this lil crate, just for fun, with only a few features,
+//! so I wouldnt recommend using it but of course I would be happy if you use it none the less.
+//! 
+//! 
+//! There may be some parts where you need to know the R34 API cause i forgot something. So check out their API
+//! 
+//! 
+//!  <https://api.rule34.xxx/>
+
 #![allow(dead_code)]
 
 use core::fmt;
