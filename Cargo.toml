@@ -1,10 +1,10 @@
 [package]
 name = "r34_api"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/NunjaUwU/R34Downloader"
-description = "Create Request Urls and parse the Json Response."
+repository = "https://github.com/NunjaUwU/r34api-library"
+description = "Create Request Urls for the R34 API and parse the Json Responses."
 readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
