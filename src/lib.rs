@@ -21,7 +21,7 @@ pub struct Request {
     pub ids: HashMap<String, Option<usize>>,
 }
 
-pub fn format_id(ids: &HashMap<String, Option<usize>>, key: &str) -> String {
+fn format_id(ids: &HashMap<String, Option<usize>>, key: &str) -> String {
     match ids.get(key) {
         Some(Some(value)) => format!("&{}={}", key, value),
         _ => String::new(),
