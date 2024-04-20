@@ -28,7 +28,7 @@ dependencies = [
 
 [[package]]
 name = "r34_api"
-version = "0.2.6"
+version = "0.2.61"
 dependencies = [
  "serde_json",
 ]
