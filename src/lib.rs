@@ -169,6 +169,7 @@ impl R34JsonParser {
 
                 for (k, b) in &mut self.conf {
                     match (k, b) {
+
                         (&"file_url", true) => {
                             if let Value::Object(ref map) = obj {
                                 if let Some(Value::String(s)) = map.get("file_url") {
@@ -176,6 +177,7 @@ impl R34JsonParser {
                                 }
                             }
                         }
+
                         (&"image", true) => {
                             if let Value::Object(ref map) = obj {
                                 if let Some(Value::String(s)) = map.get("image") {
@@ -294,14 +296,12 @@ impl R34JsonParser {
                                         "questionable" => post.rating = Some(Rating::Questionable),
                                         _ => post.rating = None,
                                     }
-                                    post.file_url = s.clone();
                                 }
                             }
                         }
                         _ => (),
                     }
                 }
-
                 post_vec.push(post);
             }
         }
@@ -316,23 +316,23 @@ impl R34JsonParser {
     ///
     /// Possible Keys:
     /// ```
-    /// "id"
-    /// "parent_id"
-    /// "image"
-    /// "tags"
-    /// "source"
-    /// "owner"
-    /// "score"
-    /// "comment_count"
-    /// "rating"
-    /// "sample"
-    /// "file_url"
-    /// "sample_url"
-    /// "preview_url"
-    /// "width"
-    /// "height"
-    /// "sample_width"
-    /// "sample_height"
+    /// "id";
+    /// "parent_id";
+    /// "image";
+    /// "tags";
+    /// "source";
+    /// "owner";
+    /// "score";
+    /// "comment_count";
+    /// "rating";
+    /// "sample";
+    /// "file_url";
+    /// "sample_url";
+    /// "preview_url";
+    /// "width";
+    /// "height";
+    /// "sample_width";
+    /// "sample_height";
     /// ```
     pub fn set_conf(mut self, key: &'static str, set: bool) -> Self {
         *self.conf.get_mut(&key).unwrap() = set;
@@ -479,14 +479,14 @@ mod tests {
         let json = buf.as_str();
 
         let posts = super::R34JsonParser::default().parse_json(json);
-        let post = &posts[0];
+        let post1 = &posts[0].to_string();
+        let post2 = &posts[1].to_string();
 
         let _file = fs::OpenOptions::new()
             .write(true)
             .append(true)
             .open("./test.txt")
             .unwrap()
-            .write(format!("Full: {}\n", &post.to_string()).as_bytes())
-            .unwrap();
+            .write_all(format!("{}\n{}\n", post1, post2).as_bytes()).unwrap();
     }
 }
