@@ -1,1 +1,0 @@
-window.ALL_CRATES = ["itoa","r34_api","ryu","serde","serde_json"];

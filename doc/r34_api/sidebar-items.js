@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Rating"],"struct":["Post","R34JsonParser","Request"]};
