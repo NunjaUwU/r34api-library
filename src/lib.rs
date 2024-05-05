@@ -1,24 +1,84 @@
-//! # Intro
-//! 
-//! Hi my english isnt the best so sorry if there are some errors in my grammer. I made this lil crate, just for fun, with only a few features,
-//! so I wouldnt recommend using it but of course I would be happy if you use it none the less.
+//! Disclaimer: I made this lil library just for fun, with only a few features,
+//! so I wouldnt recommend using it. But if you use it anyway have fun :>.
 //! 
 //! 
-//! There may be some parts where you need to know the R34 API cause i forgot something. So check out their API
+//! There may be some parts where you need to know the R34 API, I probably forgot something 🤷‍♂️. So check out R34's API
 //! 
 //! 
 //!  <https://api.rule34.xxx/>
+//! 
+//! 
+//! # Lil example
+//! ```
+//! use std::fs;
+//! use r34_api as r34;
+//! use reqwest;
+//! 
+//! #[tokio::main]
+//! async fn main() {
+//!     // First we make a new Api Url.
+//!     // We add the 'big_boobs' tag and a post limit of one so only one
+//!     // post will be returned and convert the ApiUrl type into a String.
+//!     let request_url = r34::ApiUrl::new().add_tag("big_boobs").set_limit(1).to_api_url();
+//! 
+//!     // Next we send our request to R34's API.
+//!     let api_response = reqwest::get(request_url).await.unwrap();
+//! 
+//!     // We then parse the json response and get a Vector with Post's.
+//!     let posts: Vec<r34::Post> = r34::R34JsonParser::default().from_api_response(api_response).unwrap();
+//! 
+//!     // Here we get the filename and url of the post's file.
+//!     let post_file_url = &posts[0].file_url;
+//!     let post_file_name = &posts[0].image;
+//! 
+//!     // Now we Download the file
+//!     let file_as_bytes = reqwest::get(post_file).await.unwrap().bytes().await.unwrap();
+//!     // Define its path
+//!     let path = format!("./{}", post_file_name);
+//!     // And save it.
+//!     fs::File::create(path).unwrap().write_all(&file_as_bytes).unwrap();
+//! }    
+//! ```
 
 #![allow(dead_code)]
 
 use core::fmt;
 use serde_json::Value;
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::HashMap, fmt::Display, str::FromStr};
 
-pub struct Request {
+/// The ApiUrl Struct is used to easily generate a new API Url.
+/// 
+/// # Example
+/// ```
+/// // It's very simple
+/// // You first need use the new function
+/// let api_url_struct = ApiUrl::new();
+/// 
+/// // Then u can set configurations like tags, the page id or if you wanna go crazy,
+/// // disable the json response and work with html.
+/// //!! This Crate has no implementation for html handling so if you want to work with html,
+/// //!! you have to come up with something yourself.
+/// // Lets add only one tag for the start and a request limit of 5.
+/// 
+/// api_url_struct.add_tag("big_boobs").set_limit(5);
+/// 
+/// // Now we have to convert our struct into a String that can be used as Url
+/// 
+/// let api_url = api_url_struct.to_api_url();
+/// 
+/// // This would convert to: 'https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&tags=big_boobs&limit=5&json=1'
+/// // Now with multiple tags at once and all on only two lines
+/// 
+/// let tags: Vec<String> = vec!["big_boobs".to_string(), "big_ass".to_string(), "dark_skin".to_string()];
+/// let api_url = ApiUrl::new().add_tags(tags).set_limit(5).to_api_url();
+/// 
+/// // And here we have it 'https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&tags=big_boobs big_ass dark_skin&limit=5&json=1'
+/// ```
+
+pub struct ApiUrl {
     /// Default API Access URL "https://api.rule34.xxx/index.php?page=dapi&s=post&q=index"
     pub api_url: String,
-    /// Limitter for max Post per requests. R34s API limmits to max 1000 Posts per request. Default Setting is 1000.
+    /// Limitter for max Post per APIUrls. R34s API limmits to max 1000 Posts per ApiUrl. Default Setting is 1000.
     pub req_limit: usize,
     /// All R34 tags should work when exactly taken over. Default is empty.
     pub tags: Vec<String>,
@@ -32,26 +92,19 @@ pub struct Request {
     pub ids: HashMap<String, Option<usize>>,
 }
 
-fn format_id(ids: &HashMap<String, Option<usize>>, key: &str) -> String {
-    match ids.get(key) {
-        Some(Some(value)) => format!("&{}={}", key, value),
-        _ => String::new(),
-    }
-}
-
-impl Request {
-    /// Creates a new Request by default settings
-    pub fn new() -> Request {
-        Request::default()
+impl ApiUrl {
+    /// Creates a new ApiUrl with default settings
+    pub fn new() -> ApiUrl {
+        ApiUrl::default()
     }
 
-    /// Sets the limit Filter for the request
+    /// Sets the limit Filter for the ApiUrl
     pub fn set_limit(mut self, limit: usize) -> Self {
         self.req_limit = limit;
         self
     }
 
-    /// Adds a Tag to the request
+    /// Adds a Tag to the ApiUrl
     pub fn add_tag(mut self, tag: &'static str) -> Self {
         self.tags.push(tag.to_string());
         self
@@ -62,32 +115,32 @@ impl Request {
         self
     }
 
-    /// sets the CID of the request
+    /// sets the CID of the ApiUrl
     pub fn set_cid(mut self, cid: usize) -> Self {
         self.ids.insert("cid".to_string(), Some(cid));
         self
     }
 
-    /// Sets the PID of the Request
+    /// Sets the PID of the ApiUrl
     pub fn set_pid(mut self, pid: usize) -> Self {
         self.ids.insert("pid".to_string(), Some(pid));
         self
     }
 
-    /// Sets the Post ID of the Request
+    /// Sets the Post ID of the ApiUrl
     pub fn set_id(mut self, id: usize) -> Self {
         self.ids.insert("id".to_string(), Some(id));
         self
     }
 
-    /// Activates a Json Formatted Request
+    /// Activates a Json Formatted ApiUrl
     pub fn set_json_formatted(mut self, json: bool) -> Self {
         self.json = json;
         self
     }
 
-    /// Returns the Final Request URL as a String
-    pub fn to_req_url(&mut self) -> String {
+    /// Returns the Final ApiUrl as a String
+    pub fn to_api_url(&mut self) -> String {
         let api_url = self.api_url.clone();
         let req_limit = self.req_limit;
         let json = if self.json == true { r"&json=1" } else { "" };
@@ -106,14 +159,14 @@ impl Request {
     }
 }
 
-impl Default for Request {
+impl Default for ApiUrl {
     fn default() -> Self {
         let mut ids: HashMap<String, Option<usize>> = HashMap::new();
         ids.insert("id".to_string(), None);
         ids.insert("pid".to_string(), None);
         ids.insert("cid".to_string(), None);
 
-        Request {
+        ApiUrl {
             api_url: String::from("https://api.rule34.xxx/index.php?page=dapi&s=post&q=index"),
             req_limit: 1000,
             tags: Vec::new(),
@@ -123,10 +176,28 @@ impl Default for Request {
     }
 }
 
-/// A Parser for R34 Json responses.
+fn format_id(ids: &HashMap<String, Option<usize>>, key: &str) -> String {
+    match ids.get(key) {
+        Some(Some(value)) => format!("&{}={}", key, value),
+        _ => String::new(),
+    }
+}
+
+/// A Parser for R34 API Json responses.
 ///
 /// Holds a HashMap of config options that can all be tweaked with the `set_conf()` function.
-/// Explenation and possible inputs are found in the functions description.
+/// 
+/// # Example
+/// ```
+/// let api_response: &str = ...;
+/// 
+/// // First we make a new Parser.
+/// let r34_json_parser = r34::R34JsonParser::new();
+/// 
+/// // Then we take our parser and the api response and parse it.
+/// // That will return a Vector with every Post of the api response.
+/// let posts: Vec<Post> = r34_json_parser.from_api_response(api_response);
+/// ```
 pub struct R34JsonParser {
     pub conf: HashMap<&'static str, bool>,
 }
@@ -157,13 +228,47 @@ impl Default for R34JsonParser {
 }
 
 impl R34JsonParser {
+    pub fn new() -> R34JsonParser {
+        R34JsonParser::default()
+    }
+
+    /// Takes the response of the r34 api and returns a Vector of the parsed Posts
+    /// # Errors
+    /// This function will return and Error if the response is empty.
+    /// An empty response is most likley caused by wrong configurations like wrong Tags.
+    pub fn from_api_response(&mut self, s: &str) -> Result<Vec<Post>, R34Error> {
+        if s == "" {
+            return Err(R34Error::R34EmptyReturn(String::from("One or more Tags didn't exist.")));
+        }
+
+        let value = match serde_json::Value::from_str(&s) {
+            Ok(value) => value,
+            Err(e) => {
+                return Err(R34Error::JsonParseError(e));
+            }
+        };
+
+        let pretty_json = serde_json::to_string_pretty(&value).unwrap();
+
+        Ok(self.parse_json(&pretty_json).unwrap())
+    }
+
     /// Takes a valid json string and returns a Vector of Posts with all information configured.
-    pub fn parse_json(&mut self, s: &str) -> Vec<Post> {
-        let v: Value = serde_json::from_str(s).unwrap();
+    pub fn parse_json(&mut self, s: &str) -> Result<Vec<Post>, R34Error> {
+        if s == "" {
+            return Err(R34Error::R34EmptyReturn(String::from("One or more Tags didn't exist.")));
+        }
+
+        let value: Value = match serde_json::Value::from_str(&s) {
+            Ok(value) => value,
+            Err(e) => {
+                return Err(R34Error::JsonParseError(e));
+            }
+        };
 
         let mut post_vec: Vec<Post> = Vec::new();
 
-        if let Value::Array(a) = v {
+        if let Value::Array(a) = value {
             for obj in a {
                 let mut post = Post::default();
 
@@ -305,7 +410,7 @@ impl R34JsonParser {
                 post_vec.push(post);
             }
         }
-        post_vec
+        Ok(post_vec)
     }
 
     /// Set Conifg options with the name of the field and a bool.
@@ -337,6 +442,24 @@ impl R34JsonParser {
     pub fn set_conf(mut self, key: &'static str, set: bool) -> Self {
         *self.conf.get_mut(&key).unwrap() = set;
         self
+    }
+}
+
+/// Specifically used for Parsing of Json API Rseponses
+#[derive(Debug)]
+pub enum R34Error {
+    /// Wrapper so i can use my own Error (Will be improved in future)
+    JsonParseError(serde_json::Error),
+    /// Returns when a Json file is empty
+    R34EmptyReturn(String),
+}
+
+impl std::fmt::Display for R34Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            R34Error::JsonParseError(e) => write!(f, "{}", e),
+            R34Error::R34EmptyReturn(e) => write!(f, "{}", e)
+        }
     }
 }
 
@@ -478,7 +601,7 @@ mod tests {
             .unwrap();
         let json = buf.as_str();
 
-        let posts = super::R34JsonParser::default().parse_json(json);
+        let posts = super::R34JsonParser::default().parse_json(json).unwrap();
         let post1 = &posts[0].to_string();
         let post2 = &posts[1].to_string();
 
