@@ -46,16 +46,16 @@ use core::fmt;
 use serde_json::Value;
 use std::{collections::HashMap, fmt::Display, str::FromStr};
 
-/// The ApiUrl Struct is used to easily generate a new API Url.
+/// The ApiUrl Struct is used for easily generating API Urls.
 /// 
 /// # Example
 /// ```
 /// // It's very simple
-/// // You first need use the new function
+/// // You first need to make a new ApiUrl struct
 /// let api_url_struct = ApiUrl::new();
 /// 
 /// // Then u can set configurations like tags, the page id or if you wanna go crazy,
-/// // disable the json response and work with html.
+/// // disable the json response and work with html responses.
 /// //!! This Crate has no implementation for html handling so if you want to work with html,
 /// //!! you have to come up with something yourself.
 /// // Lets add only one tag for the start and a request limit of 5.
@@ -66,9 +66,11 @@ use std::{collections::HashMap, fmt::Display, str::FromStr};
 /// 
 /// let api_url = api_url_struct.to_api_url();
 /// 
-/// // This would convert to: 'https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&tags=big_boobs&limit=5&json=1'
-/// // Now with multiple tags at once and all on only two lines
+/// // This would be 'https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&tags=big_boobs&limit=5&json=1'
+/// ```
 /// 
+/// ## With Multiple Tags
+/// ```
 /// let tags: Vec<String> = vec!["big_boobs".to_string(), "big_ass".to_string(), "dark_skin".to_string()];
 /// let api_url = ApiUrl::new().add_tags(tags).set_limit(5).to_api_url();
 /// 
@@ -186,6 +188,7 @@ fn format_id(ids: &HashMap<String, Option<usize>>, key: &str) -> String {
 /// A Parser for R34 API Json responses.
 ///
 /// Holds a HashMap of config options that can all be tweaked with the `set_conf()` function.
+/// See set_conf() for more information.
 /// 
 /// # Example
 /// ```
@@ -464,7 +467,7 @@ impl std::fmt::Display for R34Error {
 }
 
 /// Rating of the Post as enum.
-/// Will maybe get removed in future!
+/// Will probably get removed in the future!
 #[derive(Clone, Copy)]
 pub enum Rating {
     Explicit,
@@ -506,7 +509,7 @@ pub struct Post {
     pub sample_width: u64,
     /// Height of Post's Sample File
     pub sample_height: u64,
-    /// Source of Post e.g. Twitter User etc.
+    /// Source of Post e.g. Twitter url etc.
     pub source: String,
     /// ID of Post
     pub id: u64,
